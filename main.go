@@ -9,8 +9,8 @@ import (
 
 func main() {
 	a := components.MakeNode(0, 0, true, true)
-	b := components.MakeNode(5, 0, true, true)
-	c := components.MakeNode(5, 5 * math.Tan(60 * math.Pi / 180), true, false)
+	b := components.MakeNode(5, 0, false, true)
+	c := components.MakeNode(5, 5 * math.Tan(60 * math.Pi / 180), false, false)
 	d := components.MakeNode(10, 5 * math.Tan(60 * math.Pi / 180), false, false)
 
 	components.MakeElement(a, b, 200000e6, 10e-3)
@@ -20,10 +20,11 @@ func main() {
 	components.MakeElement(b, c, 200000e6, 15e-3)
 
 	components.ApplyPointLoad(d, 400e3 * math.Cos(45 * math.Pi / 180), -400e3 * math.Cos(45 * math.Pi / 180))
+
 	
 	displacements := components.Solve()
 	
 	fmt.Println(mat.Formatted(displacements, mat.Prefix(""), mat.Squeeze()))
-	// fmt.Println(ElementList[4].P)
+	fmt.Println(components.ElementList[0].P)
 	
 }

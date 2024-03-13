@@ -41,6 +41,38 @@ func ApplyPointLoad(n *Node, fx float64, fy float64) {
 	n.Load = []float64{fx, fy}
 }
 
+func OrderDegreesFreedom() []float64 {
+	
+	lastFree := 0
+	lastFixed := 0
+	degrees := make([]float64, 2*len(NodeList))
+		
+	for i := 0; i < len(NodeList); i++ {
+		if NodeList[i].FixedX {
+			NodeList[i].XDeg = 2*len(NodeList) - 1 - lastFixed
+			lastFixed++
+		}else {
+			NodeList[i].XDeg = lastFree
+			lastFree++
+		}
+		
+		if NodeList[i].FixedY {
+			NodeList[i].YDeg = 2*len(NodeList) - 1 - lastFixed
+			lastFixed++
+		}else {
+			NodeList[i].YDeg = lastFree
+			lastFree++
+		}
+
+		if NodeList[i].Loaded {
+			degrees[NodeList[i].XDeg] = NodeList[i].Load[0]
+			degrees[NodeList[i].YDeg] = NodeList[i].Load[1]	
+		}
+	}
+
+	return degrees[0:lastFree]
+}
+
 type Element struct {
 	N1		*Node
 	N2		*Node
@@ -59,7 +91,11 @@ func MakeElement(n1 *Node, n2 *Node, e float64, a float64) *Element {
 	return &element
 }
 
-func (e Element) genStiffness() {
+func (e *Element) toVector() *mat.VecDense {
+	return mat.NewVecDense(2, []float64{e.N1.X - e.N2.X, e.N1.Y - e.N2.Y})
+}
+
+func (e *Element) genStiffness() {
 	stiff := mat.NewDense(4, 4, nil)
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
@@ -87,39 +123,31 @@ func (e Element) genStiffness() {
 	e.Stiff.Scale(e.E * e.A / Dist(*e.N1, *e.N2), stiff)
 }
 
-func Solve() *mat.VecDense {
-	lastFree := 0
-	lastFixed := 0
+func (e *Element) CalcForces(del *mat.VecDense) {
+	displacement := mat.NewVecDense(4, nil)
 
-	ext := make([]float64, 2*len(NodeList))
-	
-	for i := 0; i < len(NodeList); i++ {
-		if NodeList[i].FixedX {
-			NodeList[i].XDeg = 2*len(NodeList) - 1 - lastFixed
-			lastFixed++
-		}else {
-			NodeList[i].XDeg = lastFree
-			lastFree++
-		}
-		
-		if NodeList[i].FixedY {
-			NodeList[i].YDeg = 2*len(NodeList) - 1 - lastFixed
-			lastFixed++
-		}else {
-			NodeList[i].YDeg = lastFree
-			lastFree++
-		}
-
-		if NodeList[i].Loaded {
-			ext[NodeList[i].XDeg] = NodeList[i].Load[0]
-			ext[NodeList[i].YDeg] = NodeList[i].Load[1]	
-		}
+	if !e.N1.FixedX {
+		displacement.SetVec(0, del.AtVec(e.N1.XDeg))
 	}
 
-	ext = ext[0:lastFree]
+	if !e.N1.FixedY {
+		displacement.SetVec(1, del.AtVec(e.N1.YDeg))
+	}
 
+	if !e.N2.FixedX {
+		displacement.SetVec(2, del.AtVec(e.N2.XDeg))
+	}
+
+	if !e.N2.FixedY {
+		displacement.SetVec(3, del.AtVec(e.N2.YDeg))
+	}
+
+	displacement.MulVec(e.Stiff, displacement)
+	e.P = mat.Norm(displacement.SliceVec(0, 2), 2) * math.Copysign(1, mat.Dot(displacement.SliceVec(0, 2), e.toVector()))	
+}
+
+func GenGlobal() *mat.Dense {
 	global := mat.NewDense(2*len(NodeList), 2*len(NodeList), nil)
-	gRows, _ := global.Dims()
 	
 	for i := 0; i < len(ElementList); i++ {
 		dimr, dimc := ElementList[i].Stiff.Dims()
@@ -140,34 +168,26 @@ func Solve() *mat.VecDense {
 		}	
 	}
 
-	globalFree := global.Slice(0, lastFree, 0, lastFree)
-	extFree := mat.NewVecDense(lastFree, ext)
-	del := mat.NewVecDense(lastFree, nil)
+	return global
+}
+
+func Solve() *mat.VecDense {
+
+	ext := OrderDegreesFreedom()
+
+	global := GenGlobal()
+
+	globalFree := global.Slice(0, len(ext), 0, len(ext))
+	extFree := mat.NewVecDense(len(ext), ext)
+	del := mat.NewVecDense(len(ext), nil)
 	del.SolveVec(globalFree, extFree)
 
-	globalFixed := global.Slice(lastFree, gRows, 0, lastFree)
-	extFixed := mat.NewVecDense(lastFixed, nil)
+	globalFixed := global.Slice(len(ext), 2*len(NodeList), 0, len(ext))
+	extFixed := mat.NewVecDense(2*len(NodeList) - len(ext), nil)
 	extFixed.MulVec(globalFixed, del)
 
 	for i := 0; i < len(ElementList); i++ {
-		local := make([]float64, 4)
-		if !ElementList[i].N1.FixedX {
-			local[0] = del.AtVec(ElementList[i].N1.XDeg)
-		}
-		if !ElementList[i].N1.FixedY {
-			local[1] = del.AtVec(ElementList[i].N1.YDeg)
-		}
-		if !ElementList[i].N2.FixedX {
-			local[2] = del.AtVec(ElementList[i].N2.XDeg)
-		}
-		if !ElementList[i].N2.FixedY {
-			local[3] = del.AtVec(ElementList[i].N2.YDeg)
-		}
-
-		vec := mat.NewVecDense(4, local)
-		vec.MulVec(ElementList[i].Stiff.Slice(0, 4, 0, 4), vec)
-		member := mat.NewVecDense(2, []float64{ElementList[i].N1.X - ElementList[i].N2.X, ElementList[i].N1.Y - ElementList[i].N2.Y})
-		ElementList[i].P = mat.Norm(vec.SliceVec(0, 2), 2) * math.Copysign(1, mat.Dot(vec.SliceVec(0, 2), member))
+		ElementList[i].CalcForces(del)
 	}
 
 	return del
