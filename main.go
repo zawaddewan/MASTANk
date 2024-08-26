@@ -3,28 +3,33 @@ package main
 import (
 	"MASTANk/components"
 	"fmt"
-	"math"
 	"gonum.org/v1/gonum/mat"
 )
 
 func main() {
-	a := components.MakeNode(0, 0, true, true)
-	b := components.MakeNode(5, 0, false, true)
-	c := components.MakeNode(5, 5 * math.Tan(60 * math.Pi / 180), false, false)
-	d := components.MakeNode(10, 5 * math.Tan(60 * math.Pi / 180), false, false)
+	E := 200e9
+	A1 := 1.767145867e-4
+	// A2 := 3.141592653e-4
 
-	components.MakeElement(a, b, 200000e6, 10e-3)
-	components.MakeElement(a, c, 200000e6, 15e-3)
-	components.MakeElement(c, d, 200000e6, 10e-3)
-	components.MakeElement(b, d, 200000e6, 15e-3)
-	components.MakeElement(b, c, 200000e6, 15e-3)
+	a := components.MakeNode(0,0, true, true)
+	b := components.MakeNode(0.5, 0.5, false, false)
+	c := components.MakeNode(0.5, 0, false, false)
+	d := components.MakeNode(0, 0.5, false, true)
 
-	components.ApplyPointLoad(d, 400e3 * math.Cos(45 * math.Pi / 180), -400e3 * math.Cos(45 * math.Pi / 180))
+	components.MakeElement(a, b, E, A1)
+	components.MakeElement(a, c, E, A1)
+	components.MakeElement(a, d, E, A1)
+	components.MakeElement(b, c, E, A1)
+	components.MakeElement(b, d, E, A1)
+	components.MakeElement(c, d, E, A1)
+
+	components.ApplyPointLoad(b, 0, -1)
 
 	
 	displacements := components.Solve()
 	
 	fmt.Println(mat.Formatted(displacements, mat.Prefix(""), mat.Squeeze()))
-	fmt.Println(components.ElementList[0].P)
-	
+	for i := 0; i < len(components.ElementList); i++ {
+		fmt.Println(components.ElementList[i].P)
+	}	
 }

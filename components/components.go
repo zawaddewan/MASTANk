@@ -3,6 +3,8 @@ package components
 import (
 	"gonum.org/v1/gonum/mat"
 	"math"
+	"fmt"
+	"os"
 )
 
 type Node struct {
@@ -167,7 +169,7 @@ func GenGlobal() *mat.Dense {
 			}
 		}	
 	}
-
+	
 	return global
 }
 
@@ -178,6 +180,16 @@ func Solve() *mat.VecDense {
 	global := GenGlobal()
 
 	globalFree := global.Slice(0, len(ext), 0, len(ext))
+
+	f, err := os.OpenFile("matrix.txt", os.O_CREATE | os.O_RDWR, 0644)
+
+	if err != nil {
+		panic(err)
+	}
+	s := fmt.Sprintln(mat.Formatted(globalFree, mat.Prefix(""), mat.Squeeze()))
+	f.WriteString(s)
+	f.Close()
+	
 	extFree := mat.NewVecDense(len(ext), ext)
 	del := mat.NewVecDense(len(ext), nil)
 	del.SolveVec(globalFree, extFree)
