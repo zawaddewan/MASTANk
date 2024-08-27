@@ -14,7 +14,7 @@ func main() {
 	a := components.MakeNode(0,0, true, true)
 	b := components.MakeNode(0.5, 0.5, false, false)
 	c := components.MakeNode(0.5, 0, false, false)
-	d := components.MakeNode(0, 0.5, false, true)
+	d := components.MakeNode(0, 0.5, true, false)
 
 	components.MakeElement(a, b, E, A1)
 	components.MakeElement(a, c, E, A1)

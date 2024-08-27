@@ -186,13 +186,18 @@ func Solve() *mat.VecDense {
 	if err != nil {
 		panic(err)
 	}
+	
 	s := fmt.Sprintln(mat.Formatted(globalFree, mat.Prefix(""), mat.Squeeze()))
 	f.WriteString(s)
 	f.Close()
 	
 	extFree := mat.NewVecDense(len(ext), ext)
 	del := mat.NewVecDense(len(ext), nil)
-	del.SolveVec(globalFree, extFree)
+	err = del.SolveVec(globalFree, extFree)
+
+	if(err != nil) {
+		println("Matrix is singular - free-body motion detected")
+	}
 
 	globalFixed := global.Slice(len(ext), 2*len(NodeList), 0, len(ext))
 	extFixed := mat.NewVecDense(2*len(NodeList) - len(ext), nil)
