@@ -11,17 +11,23 @@ func main() {
 	A1 := 1.767145867e-4
 	// A2 := 3.141592653e-4
 
+	components.MakeSection(E, A1)
+
 	a := components.MakeNode(0,0, true, true)
 	b := components.MakeNode(0.5, 0.5, false, false)
 	c := components.MakeNode(0.5, 0, false, false)
 	d := components.MakeNode(0, 0.5, true, false)
 
-	components.MakeElement(a, b, E, A1)
-	components.MakeElement(a, c, E, A1)
-	components.MakeElement(a, d, E, A1)
-	components.MakeElement(b, c, E, A1)
-	components.MakeElement(b, d, E, A1)
-	components.MakeElement(c, d, E, A1)
+	components.MakeElement(a, b)
+	components.MakeElement(a, c)
+	components.MakeElement(a, d)
+	components.MakeElement(b, c)
+	components.MakeElement(b, d)
+	components.MakeElement(c, d)
+
+	for i :=0; i < len(components.ElementList); i++ {
+		components.ElementList[i].ApplySection(components.SectionList[0])
+	}
 
 	components.ApplyPointLoad(b, 0, -1)
 

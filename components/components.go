@@ -75,6 +75,19 @@ func OrderDegreesFreedom() []float64 {
 	return degrees[0:lastFree]
 }
 
+type Section struct {
+	Modulus float64
+	Area float64
+}
+
+var SectionList []*Section = make([]*Section, 0)
+
+func MakeSection(modulus float64, area float64) *Section {
+	section := Section{modulus, area}
+	SectionList = append(SectionList, &section)
+	return &section
+}
+
 type Element struct {
 	N1		*Node
 	N2		*Node
@@ -86,11 +99,16 @@ type Element struct {
 
 var ElementList []*Element = make([]*Element, 0)
 
-func MakeElement(n1 *Node, n2 *Node, e float64, a float64) *Element {
-	element := Element{n1, n2, e, a, mat.NewDense(4, 4, nil), 0}
-	element.genStiffness()
+func MakeElement(n1 *Node, n2 *Node) *Element {
+	element := Element{n1, n2, 0, 0, mat.NewDense(4, 4, nil), 0}
 	ElementList = append(ElementList, &element)
 	return &element
+}
+
+func (e *Element) ApplySection(s *Section) {
+	e.E = s.Modulus
+	e.A = s.Area
+	e.genStiffness()
 }
 
 func (e *Element) toVector() *mat.VecDense {
