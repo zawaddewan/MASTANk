@@ -4,38 +4,69 @@ import (
 	"MASTANk/components"
 	"fmt"
 	"gonum.org/v1/gonum/mat"
+	"github.com/icza/gog"
+	"strings"
+	"strconv"
+	"bufio"
+	"os"
 )
 
+
 func main() {
-	E := 200e9
-	A1 := 1.767145867e-4
-	// A2 := 3.141592653e-4
+	nodes, err1 := os.Open("nodes.txt")
+	sections, err2 := os.Open("sections.txt")
+	elements, err3 := os.Open("elements.txt")
+	loads, err4 := os.Open("loads.txt")
 
-	components.MakeSection(E, A1)
-
-	a := components.MakeNode(0,0, true, true)
-	b := components.MakeNode(0.5, 0.5, false, false)
-	c := components.MakeNode(0.5, 0, false, false)
-	d := components.MakeNode(0, 0.5, true, false)
-
-	components.MakeElement(a, b)
-	components.MakeElement(a, c)
-	components.MakeElement(a, d)
-	components.MakeElement(b, c)
-	components.MakeElement(b, d)
-	components.MakeElement(c, d)
-
-	for i :=0; i < len(components.ElementList); i++ {
-		components.ElementList[i].ApplySection(components.SectionList[0])
+	if err1 != nil && err2 != nil && err3 != nil && err4 != nil {
+		panic("error reading input files")
 	}
 
-	components.ApplyPointLoad(b, 0, -1)
+	scanner := bufio.NewScanner(nodes)
 
-	
+	for scanner.Scan() {
+		data := strings.Fields(scanner.Text())
+		components.MakeNode(gog.Must(strconv.ParseFloat(data[0], 64)), gog.Must(strconv.ParseFloat(data[1], 64)), 
+		gog.Must(strconv.ParseBool(data[2])), gog.Must(strconv.ParseBool(data[3])))
+	}
+
+	scanner = bufio.NewScanner(sections)
+
+	for scanner.Scan() {
+		data := strings.Fields(scanner.Text())
+		components.MakeSection(gog.Must(strconv.ParseFloat(data[0], 64)), gog.Must(strconv.ParseFloat(data[1], 64)))
+	}
+
+	scanner = bufio.NewScanner(elements)
+
+	for scanner.Scan() {
+		data := strings.Fields(scanner.Text())
+		node1, _ := strconv.Atoi(data[0])
+		node2, _ := strconv.Atoi(data[1])
+		section, _ := strconv.Atoi(data[2])
+		components.MakeElement(components.NodeList[node1], components.NodeList[node2], components.SectionList[section])
+	}
+
+	scanner = bufio.NewScanner(loads)
+
+	for scanner.Scan() {
+		data := strings.Fields(scanner.Text())
+		node, _ := strconv.Atoi(data[0])
+		fx, _ := strconv.ParseFloat(data[1], 64)
+		fy, _ := strconv.ParseFloat(data[2], 64)
+		components.ApplyPointLoad(components.NodeList[node], fx, fy)
+	}
+
+	nodes.Close()
+	elements.Close()
+	sections.Close()
+	loads.Close()
+
 	displacements := components.Solve()
-	
+
 	fmt.Println(mat.Formatted(displacements, mat.Prefix(""), mat.Squeeze()))
 	for i := 0; i < len(components.ElementList); i++ {
 		fmt.Println(components.ElementList[i].P)
 	}	
+	
 }

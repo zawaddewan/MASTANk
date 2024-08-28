@@ -3,8 +3,6 @@ package components
 import (
 	"gonum.org/v1/gonum/mat"
 	"math"
-	"fmt"
-	"os"
 )
 
 type Node struct {
@@ -99,8 +97,11 @@ type Element struct {
 
 var ElementList []*Element = make([]*Element, 0)
 
-func MakeElement(n1 *Node, n2 *Node) *Element {
+func MakeElement(n1 *Node, n2 *Node, s ...*Section) *Element {
 	element := Element{n1, n2, 0, 0, mat.NewDense(4, 4, nil), 0}
+	if len(s) != 0 {
+		element.ApplySection(s[0])
+	}
 	ElementList = append(ElementList, &element)
 	return &element
 }
@@ -199,22 +200,13 @@ func Solve() *mat.VecDense {
 
 	globalFree := global.Slice(0, len(ext), 0, len(ext))
 
-	f, err := os.OpenFile("matrix.txt", os.O_CREATE | os.O_RDWR, 0644)
-
-	if err != nil {
-		panic(err)
-	}
-	
-	s := fmt.Sprintln(mat.Formatted(globalFree, mat.Prefix(""), mat.Squeeze()))
-	f.WriteString(s)
-	f.Close()
 	
 	extFree := mat.NewVecDense(len(ext), ext)
 	del := mat.NewVecDense(len(ext), nil)
-	err = del.SolveVec(globalFree, extFree)
+	err := del.SolveVec(globalFree, extFree)
 
 	if(err != nil) {
-		println("Matrix is singular - free-body motion detected")
+		panic("Matrix is singular - free-body motion detected")
 	}
 
 	globalFixed := global.Slice(len(ext), 2*len(NodeList), 0, len(ext))
