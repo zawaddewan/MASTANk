@@ -1,0 +1,13 @@
+Truss forces and Stresses
+Element 0: -6.254251E-01 N, -3.582045E+03 Pa
+Element 1: 1.442242E+00 N, 8.260265E+03 Pa
+Element 2: -5.577577E-01 N, -3.194489E+03 Pa
+Element 3: 0.000000E+00 N, 0.000000E+00 Pa
+Element 4: -5.577577E-01 N, -3.194489E+03 Pa
+Element 5: 7.887885E-01 N, 4.517689E+03 Pa
+
+Nodal Displacements in X and Y
+Node 0: 2.065066E-08 m, -3.856089E-08 m
+Node 1: 0.000000E+00 m, 0.000000E+00 m
+Node 2: 0.000000E+00 m, 0.000000E+00 m
+Node 3: -7.986221E-09 m, -3.057467E-08 m

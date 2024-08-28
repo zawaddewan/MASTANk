@@ -1,14 +1,14 @@
 package main
 
 import (
-	"MASTANk/components"
-	"fmt"
-	"gonum.org/v1/gonum/mat"
 	"github.com/icza/gog"
+	"MASTANk/components"
 	"strings"
 	"strconv"
 	"bufio"
+	"fmt"
 	"os"
+	"io"
 )
 
 
@@ -64,9 +64,35 @@ func main() {
 
 	displacements := components.Solve()
 
-	fmt.Println(mat.Formatted(displacements, mat.Prefix(""), mat.Squeeze()))
+	file, err := os.OpenFile("results.txt", os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0755)
+
+	if err != nil {
+		fmt.Println("error writing results file")
+	}
+
+	writer := io.MultiWriter(os.Stdout, file)
+
+	fmt.Fprintln(writer, "Truss forces and Stresses")
+
 	for i := 0; i < len(components.ElementList); i++ {
-		fmt.Println(components.ElementList[i].P)
+		force := components.ElementList[i].P
+		stress := force / components.ElementList[i].A
+		fmt.Fprintf(writer, "Element %d: %5E N, %5E Pa\n", i, force, stress)
 	}	
+
+	fmt.Fprintln(writer, "\nNodal Displacements in X and Y")
+
+	for i := 0; i < len(components.NodeList); i++ {
+		dx := 0.0
+		dy := 0.0
+		if(!components.NodeList[i].FixedX) {
+			dx = displacements.AtVec(components.NodeList[i].XDeg)
+		}
+		if(!components.NodeList[i].FixedY) {
+			dy = displacements.AtVec(components.NodeList[i].YDeg)
+		}
+
+		fmt.Fprintf(writer, "Node %d: %5E m, %5E m\n", i, dx, dy)	
+	}
 	
 }
