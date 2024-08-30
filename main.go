@@ -62,7 +62,7 @@ func main() {
 	sections.Close()
 	loads.Close()
 
-	displacements := components.Solve()
+	displacements, supports := components.Solve()
 
 	file, err := os.OpenFile("results.txt", os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0755)
 
@@ -94,5 +94,10 @@ func main() {
 
 		fmt.Fprintf(writer, "Node %d: %5E m, %5E m\n", i, dx, dy)	
 	}
-	
+
+	fmt.Fprintln(writer, "\nSupport Reactions")
+
+	for node, i := range components.FixedNodes {
+		fmt.Fprintf(writer, "Node %d: %5E N, %5E N\n", i, supports.AtVec(node.XDeg - displacements.Len()), supports.AtVec(node.YDeg - displacements.Len()))
+	}
 }

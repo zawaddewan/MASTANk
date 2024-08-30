@@ -17,10 +17,14 @@ type Node struct {
 }
 
 var NodeList []*Node = make([]*Node, 0)
+var FixedNodes map[*Node]int = make(map[*Node]int)
 
 func MakeNode(X float64, Y float64, isfixedX bool, isfixedY bool) *Node {
 	node := Node{X, Y, isfixedX, isfixedY, 0, 0, false, nil}
 	NodeList = append(NodeList, &node)
+	if isfixedX || isfixedY {
+		FixedNodes[&node] = len(NodeList) - 1
+	}
 	return &node
 }
 
@@ -192,7 +196,7 @@ func GenGlobal() *mat.Dense {
 	return global
 }
 
-func Solve() *mat.VecDense {
+func Solve() (*mat.VecDense, *mat.VecDense) {
 
 	ext := OrderDegreesFreedom()
 
@@ -217,7 +221,7 @@ func Solve() *mat.VecDense {
 		ElementList[i].CalcForces(del)
 	}
 
-	return del
+	return del, extFixed
 }
 
 
