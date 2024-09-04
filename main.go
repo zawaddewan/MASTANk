@@ -77,7 +77,7 @@ func main() {
 	for i := 0; i < len(components.ElementList); i++ {
 		force := components.ElementList[i].P
 		stress := force / components.ElementList[i].A
-		fmt.Fprintf(writer, "Element %d: %5E N, %5E Pa\n", i, force, stress)
+		fmt.Fprintf(writer, "Element %d: %5E, %5E\n", i, force, stress)
 	}	
 
 	fmt.Fprintln(writer, "\nNodal Displacements in X and Y")
@@ -92,12 +92,12 @@ func main() {
 			dy = displacements.AtVec(components.NodeList[i].YDeg)
 		}
 
-		fmt.Fprintf(writer, "Node %d: %5E m, %5E m\n", i, dx, dy)	
+		fmt.Fprintf(writer, "Node %d: %5E, %5E\n", i, dx, dy)	
 	}
 
 	fmt.Fprintln(writer, "\nSupport Reactions")
 
 	for node, i := range components.FixedNodes {
-		fmt.Fprintf(writer, "Node %d: %5E N, %5E N\n", i, supports.AtVec(node.XDeg - displacements.Len()), supports.AtVec(node.YDeg - displacements.Len()))
+		fmt.Fprintf(writer, "Node %d: %5E, %5E \n", i, supports.AtVec(node.XDeg - displacements.Len()), supports.AtVec(node.YDeg - displacements.Len()))
 	}
 }
