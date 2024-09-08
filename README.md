@@ -57,9 +57,21 @@ After making the setup files, running the program will output the forces within 
    
 If the structure is unstable, the matrix solver underlying the program will fail and the message `Matrix is singular - free body motion detected` will be printed. 
 
+If the structure is unstable, the matrix solver underlying the program will fail and the message `Matrix is singular - free body motion detected` will be printed. 
+
+After a successful calculation, MASTANk also draws two images - one of the structure before loading:
+
+<img src="https://i.imgur.com/Bp70cYt.png" width="500" height="500">
+
+And one after loads and displacements are applied:
+
+<img src="https://i.imgur.com/2CcDaC6.png" width="500" height="500">
+
+Blue members are under compression, red members are under tension, green arrows represent loading, and green triangles/circles represent different boundary conditions (pinned vs. roller)
+
 ### Todo 
 
- - Draw images of truss before and after loading, labelled with the forces in each truss
+ - ~~Draw images of truss before and after loading, labelled with the forces in each truss~~ Done!
  - Add support for distributed loads
  - Venture into the third dimension
  - Add support for frames in two and three dimensions
